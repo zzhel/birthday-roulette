@@ -141,8 +141,15 @@ main{position:relative;isolation:isolate;min-height:100svh}
   position:fixed;z-index:10;left:50%;bottom:clamp(16px,4svh,38px);translate:-50% 0;
   width:min(88vw,420px);color:#ffffffc9;font-size:.78rem;text-align:center;
 }
+#festive-music-toggle{
+  position:absolute;z-index:4;top:calc(100% + clamp(34px,7svh,82px) + 146px);left:50%;translate:-50% 0;
+  max-width:calc(100vw - 32px);padding:10px 16px;border:1px solid #ffffff42;border-radius:7px;
+  background:#21191c;color:#fff;font:700 .9rem system-ui;cursor:pointer;text-align:center;
+}
+#festive-music-toggle:hover{background:#38232a}
+#festive-music-toggle:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .web-globe{flex:0 0 auto;font-size:22px;line-height:1}
-#prize-video[hidden],#prize-desc[hidden],#prize-disclaimer[hidden]{display:none}
+#prize-video[hidden],#prize-desc[hidden],#prize-disclaimer[hidden],#festive-music-toggle[hidden]{display:none}
 #prize-video:hover,#prize-desc:hover{background:#38232a}
 #prize-video:focus-visible,#prize-desc:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .youtube-logo{display:grid;place-items:center;width:34px;height:24px;border-radius:6px;background:#ff0033}
@@ -179,7 +186,7 @@ main:has(.winner){min-height:max(100svh,550px)}
 .winner.settled .pedestal::after{opacity:.35;background:radial-gradient(ellipse,#fff,#e9edf3 45%,transparent 85%);box-shadow:0 0 16px 2px #fff5}
 .dancer{
   position:absolute;left:50%;top:50%;translate:-50% -50%;
-  width:clamp(130px,26vmin,270px);aspect-ratio:1;pointer-events:none;
+  width:clamp(170px,32vmin,340px);aspect-ratio:1;pointer-events:none;
 
   transition:opacity .3s ease;
 }
@@ -350,6 +357,8 @@ img.prize-photo{
   <span class="web-globe" aria-hidden="true">🌐</span>
   Виж и сайта, въпреки че подозирам, че си запознат
 </a>
+<button id="festive-music-toggle" type="button" aria-pressed="false" hidden>Play festive music</button>
+<audio id="festive-music" src="celeb-music.mp3" preload="metadata" loop></audio>
 <span id="prize-disclaimer" hidden>Contact ticket distributor for more information ;)</span>
 </main>
 <script>
@@ -395,6 +404,179 @@ const result = document.querySelector('#result');
 const prizeVideo = document.querySelector('#prize-video');
 const prizeDesc = document.querySelector('#prize-desc');
 const prizeDisclaimer = document.querySelector('#prize-disclaimer');
+const festiveMusicToggle = document.querySelector('#festive-music-toggle');
+const festiveMusic = document.querySelector('#festive-music');
+let audioContext;
+let suspenseTimer;
+let festiveMusicStarted = false;
+
+function startAudio() {
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextConstructor) {
+    console.warn('Web Audio is unavailable; sound effects are disabled.');
+    return;
+  }
+  if (!audioContext) audioContext = new AudioContextConstructor();
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().catch(error => console.warn('Could not resume sound effects:', error));
+  }
+}
+
+function playTone(frequency, duration, type, volume, endFrequency = frequency, delay = 0) {
+  if (!audioContext || audioContext.state === 'closed') return;
+  const start = audioContext.currentTime + delay;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
+  gain.gain.setValueAtTime(.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + .008);
+  gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration);
+}
+
+const soundEffects = {
+  open() {
+    playTone(392, .18, 'sine', .045, 587);
+    playTone(587, .24, 'sine', .04, 784, .1);
+  },
+  tick(progress) {
+    const pitch = 920 + progress * 620;
+    playTone(pitch, .085, 'sine', .032, pitch * 1.18);
+    playTone(pitch * 2.01, .11, 'triangle', .014, pitch * 1.62, .012);
+  },
+  prizeAppear(index) {
+    const root = [659.25, 783.99, 987.77, 1174.66, 1318.51][index % 5];
+    playTone(root, .34, 'sine', .04, root * 1.25);
+    playTone(root * 1.5, .42, 'sine', .028, root * 2, .08);
+    playTone(root * 2.5, .24, 'triangle', .012, root * 3, .035);
+  },
+  reveal() {
+    playTone(98, .9, 'sine', .12, 49);
+    playTone(392, .7, 'triangle', .055, 784);
+    [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((pitch, index) => {
+      playTone(pitch, .9, 'sine', .085, pitch * 1.015, index * .09);
+    });
+    [1046.5, 1318.51, 1567.98].forEach((pitch, index) => {
+      playTone(pitch, 1.15, 'triangle', .035, pitch * .99, .32 + index * .07);
+    });
+    this.cheer();
+  },
+  cheer() {
+    if (!audioContext || audioContext.state === 'closed') return;
+    const duration = 2.5;
+    const buffer = audioContext.createBuffer(1, Math.ceil(audioContext.sampleRate * duration), audioContext.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+    const source = audioContext.createBufferSource();
+    const filter = audioContext.createBiquadFilter();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime;
+    source.buffer = buffer;
+    filter.type = 'bandpass';
+    filter.Q.value = .7;
+    filter.frequency.setValueAtTime(650, start);
+    filter.frequency.linearRampToValueAtTime(1450, start + .7);
+    filter.frequency.linearRampToValueAtTime(900, start + duration);
+    gain.gain.setValueAtTime(.0001, start);
+    gain.gain.linearRampToValueAtTime(.022, start + .15);
+    gain.gain.setValueAtTime(.018, start + .8);
+    gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start(start);
+    source.stop(start + duration);
+    playTone(330, 1.25, 'sine', .018, 660, .05);
+    playTone(392, 1.5, 'sine', .016, 784, .35);
+    playTone(294, 1.35, 'sine', .015, 587, .7);
+  },
+  confettiPop() {
+    playTone(1050, .07, 'triangle', .045, 180);
+    playTone(620, .12, 'square', .018, 240, .035);
+  },
+  kick() {
+    playTone(145, .13, 'triangle', .055, 58);
+  }
+};
+
+function startSuspenseMusic() {
+  if (!audioContext || audioContext.state === 'closed' || suspenseTimer) return;
+  const notes = [110, 146.83, 164.81, 146.83, 123.47, 164.81, 146.83, 185];
+  let beat = 0;
+  suspenseTimer = setInterval(() => {
+    const pitch = notes[beat % notes.length];
+    playTone(pitch, .28, 'sine', .018, pitch * 1.015);
+    if (beat % 4 === 0) playTone(55, .42, 'triangle', .035, 42);
+    beat++;
+  }, 320);
+}
+
+function stopSuspenseMusic() {
+  clearInterval(suspenseTimer);
+  suspenseTimer = undefined;
+}
+
+async function startFestiveMusic() {
+  try {
+    if (!festiveMusicStarted) {
+      if (festiveMusic.readyState < HTMLMediaElement.HAVE_METADATA) {
+        await new Promise((resolve, reject) => {
+          const cleanup = () => {
+            festiveMusic.removeEventListener('loadedmetadata', onLoaded);
+            festiveMusic.removeEventListener('error', onError);
+          };
+          const onLoaded = () => { cleanup(); resolve(); };
+          const onError = () => { cleanup(); reject(new Error('celeb-music.mp3 failed to load')); };
+          festiveMusic.addEventListener('loadedmetadata', onLoaded, {once:true});
+          festiveMusic.addEventListener('error', onError, {once:true});
+          if (festiveMusic.readyState >= HTMLMediaElement.HAVE_METADATA) onLoaded();
+        });
+      }
+      await new Promise((resolve, reject) => {
+        const cleanup = () => {
+          festiveMusic.removeEventListener('seeked', onSeeked);
+          festiveMusic.removeEventListener('error', onError);
+        };
+        const onSeeked = () => { cleanup(); resolve(); };
+        const onError = () => { cleanup(); reject(new Error('Could not seek to 42.5 seconds in celeb-music.mp3')); };
+        festiveMusic.addEventListener('seeked', onSeeked, {once:true});
+        festiveMusic.addEventListener('error', onError, {once:true});
+        try {
+          festiveMusic.currentTime = 42.5;
+          if (!festiveMusic.seeking && festiveMusic.currentTime === 42.5) onSeeked();
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      });
+      festiveMusicStarted = true;
+    }
+    festiveMusic.volume = .15;
+    await festiveMusic.play();
+  } catch (error) {
+    festiveMusicToggle.textContent = 'Could not play music — try again';
+    festiveMusicToggle.setAttribute('aria-pressed', 'false');
+    console.warn('Could not play festive music:', error);
+    return;
+  }
+  festiveMusicToggle.textContent = 'Stop festive music';
+  festiveMusicToggle.setAttribute('aria-pressed', 'true');
+}
+
+festiveMusicToggle.addEventListener('click', () => {
+  if (!festiveMusic.paused) {
+    festiveMusic.pause();
+    festiveMusicToggle.textContent = 'Play festive music';
+    festiveMusicToggle.setAttribute('aria-pressed', 'false');
+    return;
+  }
+  startFestiveMusic();
+});
 
 function dropConfetti() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -489,6 +671,7 @@ async function flyInPrizes(cards) {
     });
     const flight = card.animate(keyframes, {duration: 630, easing: 'cubic-bezier(.25,.55,.25,1)', fill: 'both'});
     await flight.finished;
+    soundEffects.prizeAppear(cards.indexOf(card));
     const showcaseDuration = 1780;
     card.style.setProperty('--showcase-duration', showcaseDuration + 'ms');
     card.classList.add('arrived', 'solo');
@@ -512,6 +695,8 @@ async function flyInPrizes(cards) {
 
 button.addEventListener('click', async () => {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches || typeof button.animate !== 'function';
+  startAudio();
+  soundEffects.open();
   track.dataset.opening = 'true';
   button.disabled = true;
   const intro = button.closest('.ticket-intro');
@@ -529,10 +714,12 @@ button.addEventListener('click', async () => {
   const winner = gifts.findIndex(gift => gift.winner);
 
   if (!reducedMotion) {
+    startSuspenseMusic();
     await flyInPrizes([...cards.filter((_, index) => index !== winner), cards[winner]]);
     track.dataset.spinning = 'true';
     const steps = cards.length * 5 + winner;
     for (let i = 0; i <= steps; i++) {
+      soundEffects.tick(i / steps);
       const card = cards[i % cards.length];
       const duration = Math.round(360 + 280 * (i / steps) ** 2);
       card.style.setProperty('--pulse-duration', duration + 'ms');
@@ -556,6 +743,8 @@ button.addEventListener('click', async () => {
     if (index !== winner) card.setAttribute('aria-hidden', 'true');
   });
   track.dataset.revealed = 'true';
+  stopSuspenseMusic();
+  soundEffects.reveal();
   cards[winner].getBoundingClientRect();
   if (!reducedMotion && cards[winner].getAnimations) {
     const revealAnimations = cards[winner].getAnimations({subtree: true})
@@ -586,6 +775,7 @@ button.addEventListener('click', async () => {
     ]);
     dancerQuestion.hidden = true;
     for (let kick = 0; kick < 3; kick++) {
+      soundEffects.kick();
       const strike = danceSprite.animate([
         {transform:'scaleX(-1) translateX(-5px) rotate(-8deg)'},
         {transform:'scaleX(-1) translateX(16px) rotate(10deg)', offset:.45},
@@ -599,7 +789,10 @@ button.addEventListener('click', async () => {
       const pause = kick === 2 ? 850 : 430;
       await new Promise(resolve => setTimeout(resolve, pause));
     }
-    setTimeout(dropConfetti, 750);
+    setTimeout(() => {
+      soundEffects.confettiPop();
+      dropConfetti();
+    }, 750);
     await winningPhoto.animate([
       {clipPath:'inset(0)', translate:'0 0'},
       {clipPath:'inset(8% 0 21%)', translate:'-8px 1px', offset:.3},
@@ -611,6 +804,7 @@ button.addEventListener('click', async () => {
   await posterReady;
   cards[winner].classList.add('settled');
   winningPhoto.replaceWith(poster);
+  startFestiveMusic();
   const title = cards[winner].querySelector('strong');
   title.textContent = prize.name;
   for (const text of prize.details) {
@@ -636,6 +830,8 @@ button.addEventListener('click', async () => {
   prizeVideo.hidden = false;
   cards[winner].append(prizeDesc);
   prizeDesc.hidden = false;
+  cards[winner].append(festiveMusicToggle);
+  festiveMusicToggle.hidden = false;
   document.body.append(prizeDisclaimer);
   prizeDisclaimer.hidden = false;
   result.textContent = [gifts[winner].name, ...gifts[winner].details].join(' / ');
