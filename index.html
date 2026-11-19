@@ -66,18 +66,19 @@ main{position:relative;isolation:isolate;min-height:100svh}
 #open:hover{filter:brightness(1.1)}
 #open:focus-visible{outline:2px solid white;outline-offset:5px}
 .ticket-title{grid-area:1/1/2/3;font-size:clamp(.95rem,3.65vw,1.7rem);font-weight:750}
+.ticket-subtitle{font-size:.68em;font-weight:500}
 .ticket-stars{
-  grid-area:2/2;align-self:center;justify-self:center;
+  grid-area:2/2;align-self:center;justify-self:center;translate:clamp(8px,2.5vw,32px) clamp(-18px,-2.5vw,-10px);
   display:grid;justify-items:center;gap:2px;color:#ffe5a0;text-shadow:0 2px 3px #442806;
   font-size:clamp(.7rem,3.05vw,1.53rem);letter-spacing:.06em
 }
 .ticket-stars span{white-space:nowrap}
-.ticket-recipient{grid-area:2/1;align-self:center;justify-self:start;display:grid;gap:7px;font-size:clamp(.8rem,2.5vw,1.2rem)}
+.ticket-recipient{grid-area:2/1/4/2;align-self:end;justify-self:start;display:grid;gap:7px;font-size:clamp(.8rem,2.5vw,1.2rem)}
 .ticket-plaque{
   padding:8px 12px;border-left:2px solid #ffe6ab;
   background:#42270861;font-size:clamp(.82rem,2.7vw,1.15rem);font-weight:600;line-height:1.25
 }
-.ticket-stamp{grid-area:3/2;justify-self:end;align-self:end;font-size:clamp(.59rem,1.7vw,.78rem);font-weight:700;letter-spacing:.07em}
+.ticket-stamp{justify-self:start;align-self:start;font-size:clamp(.59rem,1.7vw,.78rem);font-weight:700;letter-spacing:.07em}
 .track[data-opening=true] .prize:not(.arrived){opacity:0}
 .track[data-opening=true] .scene:has(.solo) .arrived:not(.solo){opacity:.24}
 .prize.solo{z-index:8}
@@ -325,7 +326,9 @@ img.prize-photo{
 <section class="track" aria-label="Birthday roulette" hidden></section>
 <div class="ticket-intro">
   <div class="ticket-card">
-    <span class="ticket-title">31-Звезед Лотариен Билет</span>
+    <span class="ticket-title">31-звезден Лотариен Билет
+      <br><span class="ticket-subtitle">/рожденна селекция/</span>
+    </span>
     <span class="ticket-stars" aria-hidden="true">
       <span>★★★★★★★★★★</span>
       <span>★★★★★★★★★★</span>
@@ -335,8 +338,8 @@ img.prize-photo{
     <div class="ticket-recipient">
       <span>Титуляр:</span>
       <span class="ticket-plaque">Атанас Байчев</span>
+      <time class="ticket-stamp" datetime="2026-11-20">20 НОЕМВРИ 2026</time>
     </div>
-    <time class="ticket-stamp" datetime="2026-11-20">20 НОЕМВРИ 2026</time>
   </div>
   <button id="open" type="button">
     Отвори Билета
