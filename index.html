@@ -155,33 +155,31 @@ main{position:relative;isolation:isolate;min-height:100svh}
 .winner strong{width:min(88vw,700px);font-size:clamp(.83rem,2.1vw,1.45rem)}
 .winner .prize-photo{transform:scale(1.8);transform-origin:bottom center;animation:prize-zoom 1.05s cubic-bezier(.2,.7,.2,1) both}
 @keyframes prize-zoom{from{transform:var(--zoom-start, none)}to{transform:scale(1.8)}}
-#prize-video{
-  position:absolute;z-index:3;top:calc(100% + clamp(34px,7svh,82px));left:50%;translate:-50% 0;
-  display:inline-flex;align-items:center;gap:12px;padding:12px 20px;border:1px solid #ffffff42;
-  border-radius:7px;background:#21191c;color:#fff;text-decoration:none;font-weight:750;white-space:nowrap;
+#prize-extras{
+  position:absolute;top:100%;left:50%;translate:-50% 0;
+  display:grid;justify-items:center;gap:8px;padding-top:12px;
 }
-#prize-desc{
-  position:absolute;z-index:3;top:calc(100% + clamp(34px,7svh,82px) + 72px);left:50%;translate:-50% 0;
-  display:inline-flex;align-items:center;gap:12px;padding:12px 20px;border:1px solid #ffffff42;
-  width:max-content;max-width:calc(100vw - 32px);justify-content:center;
-  border-radius:7px;background:#21191c;color:#fff;text-decoration:none;font-weight:750;
-  white-space:normal;text-align:center;overflow-wrap:anywhere;
+#prize-links,#prize-qr-images{display:flex;justify-content:center;gap:12px}
+#prize-video,#prize-desc{
+  display:grid;place-items:center;width:52px;height:44px;border:1px solid #ffffff42;
+  border-radius:7px;background:#21191c;color:#fff;text-decoration:none;
 }
 #prize-disclaimer{
-  position:fixed;z-index:10;left:50%;bottom:clamp(16px,4svh,38px);translate:-50% 0;
+  position:absolute;z-index:10;left:50%;bottom:clamp(16px,4svh,38px);translate:-50% 0;
   width:min(88vw,420px);color:#ffffffc9;font-size:.78rem;text-align:center;
 }
-#show-prize-qr,.prize-qr-close{
-  padding:6px 12px;border:1px solid #b88b48;border-radius:5px;
-  background:#24190f;color:#fff1ce;font:inherit;cursor:pointer;
+#prize-qr-images{width:max-content;margin:6px 0 2px}
+.prize-qr-code{
+  --qr-size:min(40vw,clamp(108px,22svh,180px));
+  width:var(--qr-size);border:calc(var(--qr-size) / 7) solid #fff;background:#fff;
 }
-#show-prize-qr{display:block;margin:0 auto 6px;position:relative;pointer-events:auto}
-#prize-qr-dialog{width:min(92vw,535px);max-height:90svh;text-align:center}
-#prize-qr-dialog h2{margin:0 0 16px;font-size:1.15rem}
-#prize-qr-images{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
-#prize-qr-images img{width:min(224px,100%);height:auto;padding:32px;background:white;image-rendering:pixelated}
+.prize-qr-code img{display:block;width:100%;height:auto;image-rendering:pixelated}
+@media(prefers-reduced-motion:no-preference){
+  .prize-qr-code img{animation:prize-qr-reveal 4.2s steps(21,end) both}
+}
+@keyframes prize-qr-reveal{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0)}}
 .web-globe{flex:0 0 auto;font-size:22px;line-height:1}
-#prize-video[hidden],#prize-desc[hidden],#prize-disclaimer[hidden]{display:none}
+#prize-extras[hidden],#prize-disclaimer[hidden]{display:none}
 #prize-video:hover,#prize-desc:hover{background:#38232a}
 #prize-video:focus-visible,#prize-desc:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .youtube-logo{display:grid;place-items:center;width:34px;height:24px;border-radius:6px;background:#ff0033}
@@ -384,22 +382,18 @@ img.prize-photo{
   </form>
 </dialog>
 <span id="result" class="sr-only" role="status"></span>
-<a id="prize-video" href="https://youtu.be/H9Fp459mDoQ" target="_blank" rel="noopener noreferrer" hidden>
-  <span class="youtube-logo" aria-hidden="true"></span>Скивай го в тубата
-</a>
-<a id="prize-desc" href="https://www.crowdstrike24hoursofspa.com/" target="_blank" rel="noopener noreferrer" hidden>
-  <span class="web-globe" aria-hidden="true">🌐</span>
-  Виж и сайта, въпреки че подозирам, че си запознат
-</a>
-<div id="prize-disclaimer" hidden>
-  <button type="button" id="show-prize-qr" lang="bg">Покажи QR кодовете</button>
-  Contact ticket distributor for more information ;)
-</div>
-<dialog class="ticket-password" id="prize-qr-dialog" aria-labelledby="prize-qr-title" lang="bg">
-  <h2 id="prize-qr-title">QR кодове</h2>
+<div id="prize-extras" lang="bg" hidden>
   <div id="prize-qr-images"></div>
-  <form method="dialog"><button class="prize-qr-close" autofocus>Затвори</button></form>
-</dialog>
+  <div id="prize-links">
+    <a id="prize-video" href="https://youtu.be/H9Fp459mDoQ" target="_blank" rel="noopener noreferrer" aria-label="Гледай в YouTube">
+      <span class="youtube-logo" aria-hidden="true"></span>
+    </a>
+    <a id="prize-desc" href="https://www.crowdstrike24hoursofspa.com/" target="_blank" rel="noopener noreferrer" aria-label="Отвори сайта на събитието">
+      <span class="web-globe" aria-hidden="true">🌐</span>
+    </a>
+  </div>
+</div>
+<div id="prize-disclaimer" hidden>Contact ticket distributor for more information ;)</div>
 <script id="encrypted-prize-qr" type="application/json">{"salt":"eOyv31joKTK6a/pXbbs4tg==","iv":"jUuAOVzhI6VSMsnW","iterations":600000,"ciphertext":"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"}</script>
 </main>
 <script>
@@ -442,8 +436,7 @@ for (let i = gifts.length - 1; i > 0; i--) {
 const track = document.querySelector('.track');
 const button = document.querySelector('#open');
 const result = document.querySelector('#result');
-const prizeVideo = document.querySelector('#prize-video');
-const prizeDesc = document.querySelector('#prize-desc');
+const prizeExtras = document.querySelector('#prize-extras');
 const prizeDisclaimer = document.querySelector('#prize-disclaimer');
 const gt3Motion = matchMedia('(prefers-reduced-motion: reduce)');
 const gt3Sprite = new Image();
@@ -674,11 +667,8 @@ const passwordForm = document.querySelector('#ticket-password-form');
 const passwordInput = document.querySelector('#ticket-password-input');
 const passwordError = document.querySelector('#ticket-password-error');
 const passwordToggle = document.querySelector('#ticket-password-toggle');
-const qrDialog = document.querySelector('#prize-qr-dialog');
 const qrImages = document.querySelector('#prize-qr-images');
 let passwordAttempt = 0;
-
-document.querySelector('#show-prize-qr').addEventListener('click', () => qrDialog.showModal());
 
 async function decryptPrizeQr(password) {
   const {salt, iv, iterations, ciphertext} = JSON.parse(document.querySelector('#encrypted-prize-qr').textContent);
@@ -868,17 +858,20 @@ async function openTicket(images) {
     dancer.classList.replace('kicking', 'celebrating');
     cards[winner].classList.add('celebration-light');
   }
-  cards[winner].append(prizeVideo);
-  prizeVideo.hidden = false;
-  cards[winner].append(prizeDesc);
-  prizeDesc.hidden = false;
-  document.body.append(prizeDisclaimer);
+  const qrReady = [];
   images.forEach((encoded, index) => {
+    const frame = document.createElement('div');
+    frame.className = 'prize-qr-code';
     const image = document.createElement('img');
     image.src = 'data:image/png;base64,' + encoded;
     image.alt = 'QR код ' + (index + 1);
-    qrImages.append(image);
+    qrReady.push(image.decode?.());
+    frame.append(image);
+    qrImages.append(frame);
   });
+  await Promise.allSettled(qrReady);
+  cards[winner].append(prizeExtras);
+  prizeExtras.hidden = false;
   prizeDisclaimer.hidden = false;
   result.textContent = [gifts[winner].name, ...gifts[winner].details].join(' / ');
   if (!reducedMotion) void playGt3Flyby();
