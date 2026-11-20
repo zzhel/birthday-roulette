@@ -65,7 +65,6 @@ main{position:relative;isolation:isolate;min-height:100svh}
   from{transform:perspective(1000px) translateY(3px) rotateX(1deg) rotateY(-2deg)}
   to{transform:perspective(1000px) translateY(-3px) rotateX(-1deg) rotateY(2deg)}
 }
-.ticket-action{grid-area:3/2;align-self:end;justify-self:center;font-weight:700}
 @keyframes rim-lap{from{--rim-angle:0deg}to{--rim-angle:360deg}}
 #open:hover{filter:brightness(1.1)}
 #open:focus-visible{outline:2px solid white;outline-offset:5px}
@@ -153,6 +152,7 @@ main{position:relative;isolation:isolate;min-height:100svh}
 .youtube-logo{display:grid;place-items:center;width:34px;height:24px;border-radius:6px;background:#ff0033}
 .youtube-logo::before{content:"";display:block;border-block:5px solid transparent;border-left:9px solid white;margin-left:2px}
 .confetti-layer{position:fixed;inset:0;z-index:20;overflow:hidden;pointer-events:none}
+.gt3-flyby{position:fixed;inset:0;width:100%;height:100%;z-index:21;pointer-events:none}
 .confetti-piece{
   position:absolute;top:-24px;left:var(--left);
   width:var(--width);height:var(--height);border-radius:var(--radius);
@@ -311,9 +311,9 @@ img.prize-photo{
 </div>
 <section class="track" aria-label="Birthday roulette" hidden></section>
 <div class="ticket-intro">
-  <button class="ticket-card" id="open" type="button">
+  <button class="ticket-card" id="open" type="button" aria-label="Отвори Билета">
     <span class="ticket-title">31-звезден Лотариен Билет
-      <br><span class="ticket-subtitle">/рожденна селекция/</span>
+      <br><span class="ticket-subtitle">/рождена селекция/</span>
     </span>
     <span class="ticket-stars" aria-hidden="true">
       <span>★★★★★★★★★★</span>
@@ -326,7 +326,6 @@ img.prize-photo{
       <span class="ticket-plaque">Атанас Байчев</span>
       <time class="ticket-stamp" datetime="2026-11-20">20 НОЕМВРИ 2026</time>
     </span>
-    <span class="ticket-action">Отвори Билета</span>
   </button>
 </div>
 <span id="result" class="sr-only" role="status"></span>
@@ -382,6 +381,117 @@ const result = document.querySelector('#result');
 const prizeVideo = document.querySelector('#prize-video');
 const prizeDesc = document.querySelector('#prize-desc');
 const prizeDisclaimer = document.querySelector('#prize-disclaimer');
+const gt3Motion = matchMedia('(prefers-reduced-motion: reduce)');
+const gt3Sprite = new Image();
+if (!gt3Motion.matches) gt3Sprite.src = 'gt3-car.webp';
+
+async function playGt3Flyby() {
+  if (gt3Motion.matches) return;
+  gt3Sprite.src ||= 'gt3-car.webp';
+  try {
+    await gt3Sprite.decode();
+  } catch {
+    return;
+  }
+  if (gt3Motion.matches) return;
+
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  canvas.className = 'gt3-flyby';
+  canvas.setAttribute('aria-hidden', 'true');
+  document.body.append(canvas);
+
+  const cars = [
+    {start:180, duration:1250, lane:.87, scale:.76, filter:'hue-rotate(205deg)'},
+    {start:510, duration:1320, lane:.94, scale:1, filter:'none'},
+    {start:910, duration:1150, lane:.81, scale:.64, filter:'hue-rotate(55deg)'}
+  ];
+  const pickup = [];
+  let started;
+  let lastFrame = -Infinity;
+
+  function draw(now) {
+    started ??= now;
+    const elapsed = now - started;
+    if (gt3Motion.matches) {
+      canvas.remove();
+      return;
+    }
+    if (elapsed > 2700) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      pickup.length = 0;
+      started = undefined;
+      lastFrame = -Infinity;
+      setTimeout(() => requestAnimationFrame(draw), 850);
+      return;
+    }
+
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const density = Math.min(devicePixelRatio, 2);
+    const pixelWidth = Math.round(width * density);
+    const pixelHeight = Math.round(height * density);
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+    context.setTransform(density, 0, 0, density, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const emit = elapsed - lastFrame >= 22;
+    if (emit) lastFrame = elapsed;
+    const visibleCars = [];
+    for (const car of cars) {
+      const progress = (elapsed - car.start) / car.duration;
+      if (progress < 0 || progress > 1) continue;
+      const carWidth = Math.min(330, Math.max(128, width * .32)) * car.scale;
+      const carHeight = carWidth * gt3Sprite.naturalHeight / gt3Sprite.naturalWidth;
+      const x = (width + carWidth * 2) * progress - carWidth;
+      const y = height * car.lane;
+      visibleCars.push({car, x, y, carWidth, carHeight});
+
+      if (!emit || x + carWidth < 0 || x > width) continue;
+      for (const axle of [.244, .8]) {
+        for (let i = 0; i < 3; i++) {
+          pickup.push({
+            born:elapsed, x:x + axle * carWidth, y:y - 2,
+            vx:-90 - Math.random() * 210, vy:-35 - Math.random() * 105,
+            life:220 + Math.random() * 380, size:1.5 + Math.random() * 3,
+            angle:Math.random() * Math.PI, color:i === 0 ? '#b4a38f' : '#524d49'
+          });
+        }
+      }
+    }
+
+    for (let i = pickup.length - 1; i >= 0; i--) {
+      const piece = pickup[i];
+      const age = elapsed - piece.born;
+      if (age >= piece.life) {
+        pickup.splice(i, 1);
+        continue;
+      }
+      const seconds = age / 1000;
+      context.save();
+      context.globalAlpha = 1 - age / piece.life;
+      context.fillStyle = piece.color;
+      context.translate(piece.x + piece.vx * seconds, piece.y + piece.vy * seconds + 235 * seconds ** 2);
+      context.rotate(piece.angle + seconds * 14);
+      context.fillRect(0, 0, piece.size * 1.5, piece.size);
+      context.restore();
+    }
+
+    for (const {car, x, y, carWidth, carHeight} of visibleCars) {
+      context.filter = car.filter;
+      context.drawImage(gt3Sprite, x, y - carHeight, carWidth, carHeight);
+    }
+    context.filter = 'none';
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+}
+
 function dropConfetti() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer = document.createElement('div');
@@ -626,6 +736,7 @@ button.addEventListener('click', async () => {
   document.body.append(prizeDisclaimer);
   prizeDisclaimer.hidden = false;
   result.textContent = [gifts[winner].name, ...gifts[winner].details].join(' / ');
+  if (!reducedMotion) void playGt3Flyby();
 }, {once: true});
 </script>
 </body>
