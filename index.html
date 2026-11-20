@@ -771,8 +771,15 @@ async function openTicket(images) {
     ).finished;
   }
   intro.hidden = true;
-  track.hidden = false;
   await new Promise(resolve => setTimeout(resolve, 1000));
+  track.hidden = false;
+  if (!reducedMotion) {
+    await dancer.animate([
+      {transform:'scale(0)'},
+      {transform:'scale(1.12)', offset:.76},
+      {transform:'scale(1)'}
+    ], {duration:640, easing:'cubic-bezier(.2,.7,.3,1)'}).finished;
+  }
   result.textContent = 'Opening your birthday ticket…';
   const cards = [...track.querySelectorAll('.prize')];
   const winner = gifts.findIndex(gift => gift.winner);
