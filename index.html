@@ -190,7 +190,9 @@ main{position:relative;isolation:isolate;min-height:100svh}
 .youtube-logo{display:grid;place-items:center;width:34px;height:24px;border-radius:6px;background:#ff0033}
 .youtube-logo::before{content:"";display:block;border-block:5px solid transparent;border-left:9px solid white;margin-left:2px}
 .confetti-layer{position:fixed;inset:0;z-index:20;overflow:hidden;pointer-events:none}
-.gt3-flyby{position:fixed;inset:0;width:100%;height:100%;z-index:21;pointer-events:none}
+.gt3-flyby{position:fixed;inset:0;z-index:21;overflow:hidden;pointer-events:none}
+.gt3-flyby canvas{position:absolute;inset:0;width:100%;height:100%}
+.gt3-flyby img{position:absolute;top:0;left:0}
 .confetti-piece{
   position:absolute;top:-24px;left:var(--left);
   width:var(--width);height:var(--height);border-radius:var(--radius);
@@ -464,15 +466,24 @@ async function playGt3Flyby() {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
   if (!context) return;
-  canvas.className = 'gt3-flyby';
-  canvas.setAttribute('aria-hidden', 'true');
-  document.body.append(canvas);
+  const layer = document.createElement('div');
+  layer.className = 'gt3-flyby';
+  layer.setAttribute('aria-hidden', 'true');
+  layer.append(canvas);
 
   const cars = [
     {start:180, duration:1250, lane:.87, scale:.76, filter:'hue-rotate(205deg)'},
     {start:510, duration:1320, lane:.94, scale:1, filter:'none'},
-    {start:910, duration:1150, lane:.81, scale:.64, filter:'hue-rotate(55deg)'}
+    {start:910, duration:1150, lane:.81, scale:.64, filter:'hue-rotate(85deg) brightness(1.2)'}
   ];
+  for (const car of cars) {
+    car.sprite = gt3Sprite.cloneNode();
+    car.sprite.alt = '';
+    car.sprite.hidden = true;
+    car.sprite.style.filter = car.filter;
+    layer.append(car.sprite);
+  }
+  document.body.append(layer);
   const pickup = [];
   let started;
   let lastFrame = -Infinity;
@@ -481,11 +492,12 @@ async function playGt3Flyby() {
     started ??= now;
     const elapsed = now - started;
     if (gt3Motion.matches) {
-      canvas.remove();
+      layer.remove();
       return;
     }
     if (elapsed > 2700) {
       context.clearRect(0, 0, canvas.width, canvas.height);
+      for (const car of cars) car.sprite.hidden = true;
       pickup.length = 0;
       started = undefined;
       lastFrame = -Infinity;
@@ -507,15 +519,16 @@ async function playGt3Flyby() {
 
     const emit = elapsed - lastFrame >= 22;
     if (emit) lastFrame = elapsed;
-    const visibleCars = [];
     for (const car of cars) {
       const progress = (elapsed - car.start) / car.duration;
-      if (progress < 0 || progress > 1) continue;
+      car.sprite.hidden = progress < 0 || progress > 1;
+      if (car.sprite.hidden) continue;
       const carWidth = Math.min(330, Math.max(128, width * .32)) * car.scale;
       const carHeight = carWidth * gt3Sprite.naturalHeight / gt3Sprite.naturalWidth;
       const x = (width + carWidth * 2) * progress - carWidth;
       const y = height * car.lane;
-      visibleCars.push({car, x, y, carWidth, carHeight});
+      car.sprite.style.width = carWidth + 'px';
+      car.sprite.style.transform = `translate(${x}px, ${y - carHeight}px)`;
 
       if (!emit || x + carWidth < 0 || x > width) continue;
       for (const axle of [.244, .8]) {
@@ -547,11 +560,6 @@ async function playGt3Flyby() {
       context.restore();
     }
 
-    for (const {car, x, y, carWidth, carHeight} of visibleCars) {
-      context.filter = car.filter;
-      context.drawImage(gt3Sprite, x, y - carHeight, carWidth, carHeight);
-    }
-    context.filter = 'none';
     requestAnimationFrame(draw);
   }
 
