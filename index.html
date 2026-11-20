@@ -567,7 +567,7 @@ function dropConfetti() {
   document.body.append(layer);
   let wave = 0;
   const rain = setInterval(() => {
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 23; i++) {
       const piece = document.createElement('span');
       piece.className = 'confetti-piece';
       piece.style.setProperty('--left', Math.random() * 100 + '%');
@@ -880,13 +880,18 @@ async function openTicket(images) {
 
   if (!reducedMotion) {
     await poster.animate([
-      {clipPath:'inset(28% 0 46%)', translate:'10px 0', filter:'drop-shadow(-5px 0 #5589bc)'},
-      {clipPath:'inset(5% 0 36%)', translate:'-8px 0', filter:'drop-shadow(4px 0 #b05564)', offset:.18},
-      {clipPath:'inset(41% 0 8%)', translate:'5px 0', filter:'drop-shadow(-3px 0 #5589bc)', offset:.36},
-      {clipPath:'inset(7% 0 14%)', translate:'-4px 0', filter:'none', offset:.55},
-      {clipPath:'inset(0)', translate:'2px 0', filter:'none', offset:.73},
-      {clipPath:'inset(0)', translate:'0 0', filter:'none'}
-    ].map(frame => ({...frame, easing:'steps(1,end)'})), {duration:1050}).finished;
+      {clipPath:'inset(40% 0 50%)', translate:'10px 0', filter:'drop-shadow(-5px 0 #5589bc)'},
+      {clipPath:'inset(35% 0 46%)', translate:'-8px 0', filter:'drop-shadow(4px 0 #b05564)'},
+      {clipPath:'inset(29% 0 41%)', translate:'8px 0', filter:'drop-shadow(-4px 0 #5589bc)'},
+      {clipPath:'inset(22% 0 38%)', translate:'-6px 0', filter:'drop-shadow(3px 0 #b05564)'},
+      {clipPath:'inset(18% 0 32%)', translate:'5px 0', filter:'drop-shadow(-3px 0 #5589bc)'},
+      {clipPath:'inset(13% 0 26%)', translate:'-4px 0', filter:'drop-shadow(2px 0 #b05564)'},
+      {clipPath:'inset(9% 0 20%)', translate:'3px 0'},
+      {clipPath:'inset(6% 0 14%)', translate:'-2px 0'},
+      {clipPath:'inset(3% 0 9%)', translate:'2px 0'},
+      {clipPath:'inset(1% 0 4%)', translate:'-1px 0'},
+      {clipPath:'inset(0)', translate:'0 0'}
+    ].map(frame => ({filter:'none', ...frame, easing:'steps(1,end)'})), {duration:1750}).finished;
     dancer.classList.replace('kicking', 'celebrating');
     cards[winner].classList.add('celebration-light');
   }
