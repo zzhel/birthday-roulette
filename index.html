@@ -858,6 +858,7 @@ async function openTicket(images) {
     setTimeout(() => {
       dropConfetti();
     }, 750);
+    dancerQuestion.hidden = false;
     await winningPhoto.animate([
       {clipPath:'inset(0)', translate:'0 0'},
       {clipPath:'inset(8% 0 21%)', translate:'-8px 1px', offset:.3},
@@ -869,15 +870,6 @@ async function openTicket(images) {
   await posterReady;
   cards[winner].classList.add('settled');
   winningPhoto.replaceWith(poster);
-  const title = cards[winner].querySelector('strong');
-  title.textContent = prize.name;
-  for (const text of prize.details) {
-    const detail = document.createElement('span');
-    detail.className = 'prize-detail';
-    detail.textContent = text;
-    title.append(detail);
-  }
-
   if (!reducedMotion) {
     await poster.animate([
       {clipPath:'inset(40% 0 50%)', translate:'10px 0', filter:'drop-shadow(-5px 0 #5589bc)'},
@@ -891,9 +883,18 @@ async function openTicket(images) {
       {clipPath:'inset(3% 0 9%)', translate:'2px 0'},
       {clipPath:'inset(1% 0 4%)', translate:'-1px 0'},
       {clipPath:'inset(0)', translate:'0 0'}
-    ].map(frame => ({filter:'none', ...frame, easing:'steps(1,end)'})), {duration:1750}).finished;
+    ].map(frame => ({filter:'none', ...frame, easing:'steps(1,end)'})), {duration:4000}).finished;
+    dancerQuestion.hidden = true;
     dancer.classList.replace('kicking', 'celebrating');
     cards[winner].classList.add('celebration-light');
+  }
+  const title = cards[winner].querySelector('strong');
+  title.textContent = prize.name;
+  for (const text of prize.details) {
+    const detail = document.createElement('span');
+    detail.className = 'prize-detail';
+    detail.textContent = text;
+    title.append(detail);
   }
   const qrReady = [];
   images.forEach((encoded, index) => {
