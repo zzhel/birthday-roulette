@@ -68,6 +68,32 @@ main{position:relative;isolation:isolate;min-height:100svh}
 @keyframes rim-lap{from{--rim-angle:0deg}to{--rim-angle:360deg}}
 #open:hover{filter:brightness(1.1)}
 #open:focus-visible{outline:2px solid white;outline-offset:5px}
+.ticket-password{
+  width:min(90vw,360px);padding:24px;border:1px solid #b88b48;border-radius:9px;
+  background:#24190f;color:#fff1ce;box-shadow:0 12px 45px #0009;
+}
+.ticket-password::backdrop{background:#030207bb}
+.ticket-password label{display:block;margin-bottom:10px;font-weight:700}
+.ticket-password input{
+  width:100%;padding:9px 12px;border:1px solid #b88b48;border-radius:5px;
+  background:#120d08;color:inherit;font:inherit;
+}
+.ticket-password-field{position:relative}
+.ticket-password-field input{padding-inline-end:48px}
+.ticket-password-toggle{
+  position:absolute;inset-block:0;inset-inline-end:0;width:44px;
+  display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:inherit;cursor:pointer;
+}
+.ticket-password-toggle svg{width:21px;height:21px}
+.ticket-password-toggle[aria-pressed=false] .eye-slash{display:none}
+.ticket-password-error{margin:8px 0 0;color:#ffb5a8}
+.ticket-password-error:empty{margin:0}
+.ticket-password-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:18px}
+.ticket-password-actions button{
+  padding:8px 12px;border:1px solid #b88b48;border-radius:5px;
+  background:transparent;color:inherit;font:inherit;cursor:pointer;
+}
+.ticket-password-actions button[type=submit]{background:#e3b766;color:#24190f}
 .ticket-title{grid-area:1/1/2/3;font-size:clamp(.95rem,3.65vw,1.7rem);font-weight:750}
 .ticket-subtitle{font-size:.68em;font-weight:500}
 .ticket-stars{
@@ -145,6 +171,15 @@ main{position:relative;isolation:isolate;min-height:100svh}
   position:fixed;z-index:10;left:50%;bottom:clamp(16px,4svh,38px);translate:-50% 0;
   width:min(88vw,420px);color:#ffffffc9;font-size:.78rem;text-align:center;
 }
+#show-prize-qr,.prize-qr-close{
+  padding:6px 12px;border:1px solid #b88b48;border-radius:5px;
+  background:#24190f;color:#fff1ce;font:inherit;cursor:pointer;
+}
+#show-prize-qr{display:block;margin:0 auto 6px;position:relative;pointer-events:auto}
+#prize-qr-dialog{width:min(92vw,535px);max-height:90svh;text-align:center}
+#prize-qr-dialog h2{margin:0 0 16px;font-size:1.15rem}
+#prize-qr-images{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+#prize-qr-images img{width:min(224px,100%);height:auto;padding:32px;background:white;image-rendering:pixelated}
 .web-globe{flex:0 0 auto;font-size:22px;line-height:1}
 #prize-video[hidden],#prize-desc[hidden],#prize-disclaimer[hidden]{display:none}
 #prize-video:hover,#prize-desc:hover{background:#38232a}
@@ -328,6 +363,26 @@ img.prize-photo{
     </span>
   </button>
 </div>
+<dialog class="ticket-password" id="ticket-password-dialog" aria-labelledby="ticket-password-label" lang="bg">
+  <form id="ticket-password-form">
+    <label id="ticket-password-label" for="ticket-password-input">Въведи парола:</label>
+    <div class="ticket-password-field">
+      <input id="ticket-password-input" type="password" autofocus autocapitalize="none" autocomplete="off" spellcheck="false" aria-describedby="ticket-password-error">
+      <button class="ticket-password-toggle" id="ticket-password-toggle" type="button" aria-label="Покажи паролата" aria-pressed="false" aria-controls="ticket-password-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/>
+          <circle cx="12" cy="12" r="2.5"/>
+          <path class="eye-slash" d="m4 4 16 16"/>
+        </svg>
+      </button>
+    </div>
+    <p class="ticket-password-error" id="ticket-password-error" role="alert"></p>
+    <div class="ticket-password-actions">
+      <button id="ticket-password-cancel" type="button">Откажи</button>
+      <button type="submit">Потвърди</button>
+    </div>
+  </form>
+</dialog>
 <span id="result" class="sr-only" role="status"></span>
 <a id="prize-video" href="https://youtu.be/H9Fp459mDoQ" target="_blank" rel="noopener noreferrer" hidden>
   <span class="youtube-logo" aria-hidden="true"></span>Скивай го в тубата
@@ -336,7 +391,16 @@ img.prize-photo{
   <span class="web-globe" aria-hidden="true">🌐</span>
   Виж и сайта, въпреки че подозирам, че си запознат
 </a>
-<span id="prize-disclaimer" hidden>Contact ticket distributor for more information ;)</span>
+<div id="prize-disclaimer" hidden>
+  <button type="button" id="show-prize-qr" lang="bg">Покажи QR кодовете</button>
+  Contact ticket distributor for more information ;)
+</div>
+<dialog class="ticket-password" id="prize-qr-dialog" aria-labelledby="prize-qr-title" lang="bg">
+  <h2 id="prize-qr-title">QR кодове</h2>
+  <div id="prize-qr-images"></div>
+  <form method="dialog"><button class="prize-qr-close" autofocus>Затвори</button></form>
+</dialog>
+<script id="encrypted-prize-qr" type="application/json">{"salt":"eOyv31joKTK6a/pXbbs4tg==","iv":"jUuAOVzhI6VSMsnW","iterations":600000,"ciphertext":"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"}</script>
 </main>
 <script>
 const gifts = [
@@ -605,7 +669,82 @@ async function flyInPrizes(cards) {
   cards.forEach(card => card.classList.remove('arrived'));
 }
 
-button.addEventListener('click', async () => {
+const passwordDialog = document.querySelector('#ticket-password-dialog');
+const passwordForm = document.querySelector('#ticket-password-form');
+const passwordInput = document.querySelector('#ticket-password-input');
+const passwordError = document.querySelector('#ticket-password-error');
+const passwordToggle = document.querySelector('#ticket-password-toggle');
+const qrDialog = document.querySelector('#prize-qr-dialog');
+const qrImages = document.querySelector('#prize-qr-images');
+let passwordAttempt = 0;
+
+document.querySelector('#show-prize-qr').addEventListener('click', () => qrDialog.showModal());
+
+async function decryptPrizeQr(password) {
+  const {salt, iv, iterations, ciphertext} = JSON.parse(document.querySelector('#encrypted-prize-qr').textContent);
+  const bytes = encoded => Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
+  const material = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:bytes(salt), iterations, hash:'SHA-256'}, material,
+    {name:'AES-GCM', length:256}, false, ['decrypt']
+  );
+  const cleartext = await crypto.subtle.decrypt({name:'AES-GCM', iv:bytes(iv)}, key, bytes(ciphertext));
+  return JSON.parse(new TextDecoder().decode(cleartext));
+}
+
+function setPasswordVisible(visible) {
+  passwordInput.type = visible ? 'text' : 'password';
+  passwordToggle.setAttribute('aria-pressed', String(visible));
+}
+
+passwordToggle.addEventListener('click', () => setPasswordVisible(passwordInput.type === 'password'));
+
+button.addEventListener('click', () => {
+  if (passwordDialog.open || button.disabled) return;
+  passwordAttempt++;
+  passwordForm.reset();
+  setPasswordVisible(false);
+  passwordInput.removeAttribute('aria-invalid');
+  passwordError.textContent = '';
+  passwordDialog.showModal();
+});
+document.querySelector('#ticket-password-cancel').addEventListener('click', () => passwordDialog.close());
+passwordInput.addEventListener('input', () => {
+  passwordAttempt++;
+  passwordInput.removeAttribute('aria-invalid');
+  passwordError.textContent = '';
+});
+passwordForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!passwordDialog.open || button.disabled) return;
+  if (!globalThis.crypto?.subtle) {
+    passwordError.textContent = 'Отвори страницата през HTTPS.';
+    return;
+  }
+  const attempt = ++passwordAttempt;
+  let images;
+  try {
+    images = await decryptPrizeQr(passwordInput.value);
+  } catch (error) {
+    if (attempt !== passwordAttempt || !passwordDialog.open) return;
+    if (error.name !== 'OperationError') {
+      passwordError.textContent = 'QR кодовете не могат да се заредят.';
+      return;
+    }
+    passwordInput.setAttribute('aria-invalid', 'true');
+    passwordError.textContent = 'Грешна парола. Опитай отново.';
+    passwordInput.select();
+    return;
+  }
+  if (attempt !== passwordAttempt || !passwordDialog.open) return;
+  passwordForm.reset();
+  passwordDialog.close();
+  void openTicket(images);
+});
+
+async function openTicket(images) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches || typeof button.animate !== 'function';
   track.dataset.opening = 'true';
   button.disabled = true;
@@ -734,10 +873,16 @@ button.addEventListener('click', async () => {
   cards[winner].append(prizeDesc);
   prizeDesc.hidden = false;
   document.body.append(prizeDisclaimer);
+  images.forEach((encoded, index) => {
+    const image = document.createElement('img');
+    image.src = 'data:image/png;base64,' + encoded;
+    image.alt = 'QR код ' + (index + 1);
+    qrImages.append(image);
+  });
   prizeDisclaimer.hidden = false;
   result.textContent = [gifts[winner].name, ...gifts[winner].details].join(' / ');
   if (!reducedMotion) void playGt3Flyby();
-}, {once: true});
+}
 </script>
 </body>
 </html>
