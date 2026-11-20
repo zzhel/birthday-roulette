@@ -30,7 +30,7 @@ main{position:relative;isolation:isolate;min-height:100svh}
 .prize strong{font-size:calc(clamp(.75rem,1.55vw,1.45rem) * var(--depth-scale));line-height:1.25;font-weight:750;color:#fff;text-shadow:0 1px 2px #000}
 .track[data-spinning=true] .prize:not(.active) .prize-photo{opacity:.64}
 .track[hidden],.ticket-intro[hidden]{display:none}
-.ticket-intro{position:absolute;z-index:7;inset:0;display:grid;align-content:center;justify-items:center;gap:clamp(28px,5svh,48px)}
+.ticket-intro{position:absolute;z-index:7;inset:0;overflow:clip;display:grid;align-content:center;justify-items:center;gap:clamp(28px,5svh,48px)}
 .ticket-card{
   position:relative;isolation:isolate;
   width:min(92vw,650px);min-height:min(38vw,267px);overflow:hidden;
@@ -751,9 +751,23 @@ async function openTicket(images) {
   button.disabled = true;
   const intro = button.closest('.ticket-intro');
   if (!reducedMotion) {
-    await intro.animate(
-      [{opacity: 1, transform: 'scale(1)'}, {opacity: 0, transform: 'scale(1.045)'}],
-      {duration: 320, easing: 'ease-in', fill: 'forwards'}
+    await button.animate(
+      [
+        {filter:'none', offset:0},
+        {filter:'hue-rotate(85deg) saturate(1.65) brightness(1.35) drop-shadow(0 0 16px #62ff87)', offset:.25},
+        {filter:'none', offset:.76},
+        {filter:'none', offset:1}
+      ],
+      {duration:260, iterations:3, easing:'ease-in-out'}
+    ).finished;
+    await button.animate(
+      [
+        {transform:getComputedStyle(button).transform},
+        {transform:'perspective(700px) translate(-4vw, -5svh) rotateZ(-22deg) rotateY(-35deg) scale(1.04)', offset:.15},
+        {transform:'perspective(700px) translate(23vw, -15svh) rotateZ(320deg) rotateY(530deg) scale(.87)', offset:.51},
+        {transform:'perspective(700px) translate(110vw, -37svh) rotateZ(890deg) rotateY(1260deg) scale(.55)'}
+      ],
+      {duration:1020, easing:'ease-in', fill:'forwards'}
     ).finished;
   }
   intro.hidden = true;
